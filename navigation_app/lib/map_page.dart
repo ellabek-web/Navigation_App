@@ -20,13 +20,12 @@ class _LocationSearchWidgetState extends State<LocationSearchWidget> {
   List<Marker> _markers = [];
   List<LatLng> routePoints = [];
   LatLng? currentLocation;
+  LatLng? destinationLocation;
 
   @override
   void initState() {
     super.initState();
-    getCurrentLocation().then((_) {
-      fetchRoute();
-    });
+    getCurrentLocation();
   }
 
   Future<void> fetchRoute() async {
@@ -34,18 +33,38 @@ class _LocationSearchWidgetState extends State<LocationSearchWidget> {
     String origin = currentLocation != null
         ? '${currentLocation!.longitude},${currentLocation!.latitude}'
         : '38.7500,9.0000'; // Origin latitude and longitude
-    String destination = '38.8101,8.9831'; // Destination latitude and longitude
+    String destination = destinationLocation != null
+        ? '${destinationLocation!.longitude},${destinationLocation!.latitude}'
+        : '38.8101,8.9831'; // Destination latitude and longitude
 
     Uri uri =
         Uri.parse('$url/route/v1/driving/$origin;$destination?overview=full');
 
     final response = await http.get(uri);
-    print("hi there");
+
     if (response.statusCode == 200) {
       var data = json.decode(response.body);
       int distance = (data['routes'][0]['distance']).toInt();
       int duration = (data['routes'][0]['duration']).toInt();
 
+      if (data.containsKey('features')) {
+        List<dynamic> features = data['features'];
+
+        if (features.isNotEmpty) {
+          List<dynamic> steps =
+              features[0]['properties']['segments'][0]['steps'];
+
+          for (var step in steps) {
+            String instruction = step['instruction'];
+            double distance = step['distance'];
+
+            print('Instruction: $instruction');
+            print('Distance: $distance meters');
+          }
+        }
+      } else {
+        print("False");
+      }
       // Print the distance and duration
       print('Distance: $distance meters');
       print('Duration: $duration seconds');
@@ -72,6 +91,7 @@ class _LocationSearchWidgetState extends State<LocationSearchWidget> {
       );
       setState(() {
         currentLocation = LatLng(position.latitude, position.longitude);
+        mapController.move(currentLocation!, 13.0);
       });
     } else {
       // Handle permission denied or restricted
@@ -157,14 +177,15 @@ class _LocationSearchWidgetState extends State<LocationSearchWidget> {
                           child: Icon(Icons.location_on, color: Colors.blue),
                         ),
                       ),
-                    Marker(
-                      width: 40.0,
-                      height: 40.0,
-                      point: LatLng(8.9831, 38.8101),
-                      child: Container(
-                        child: Icon(Icons.location_on, color: Colors.green),
+                    if (destinationLocation != null)
+                      Marker(
+                        width: 40.0,
+                        height: 40.0,
+                        point: destinationLocation!,
+                        child: Container(
+                          child: Icon(Icons.location_on, color: Colors.green),
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ],
@@ -192,18 +213,22 @@ class _LocationSearchWidgetState extends State<LocationSearchWidget> {
           double lon = double.parse(data[0]['lon']);
 
           setState(() {
-            _markers = [
-              Marker(
-                width: 80.0,
-                height: 80.0,
-                point: LatLng(lat, lon),
-                child: Container(
-                    child: Icon(
-                  Icons.location_on,
-                  color: Colors.red,
-                )),
-              ),
-            ];
+            destinationLocation = LatLng(
+                double.parse(data[0]['lat']), double.parse(data[0]['lon']));
+            print(destinationLocation);
+            fetchRoute();
+            // _markers = [
+            //   Marker(
+            //     width: 80.0,
+            //     height: 80.0,
+            //     point: LatLng(lat, lon),
+            //     child: Container(
+            //         child: Icon(
+            //       Icons.location_on,
+            //       color: Colors.red,
+            //     )),
+            //   ),
+            // ];
           });
         }
       }
