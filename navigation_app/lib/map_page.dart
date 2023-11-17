@@ -37,8 +37,8 @@ class _LocationSearchWidgetState extends State<LocationSearchWidget> {
         ? '${destinationLocation!.longitude},${destinationLocation!.latitude}'
         : '38.8101,8.9831'; // Destination latitude and longitude
 
-    Uri uri = Uri.parse(
-        '$url/route/v1/driving/$origin;$destination?overview=full&steps=true');
+    Uri uri =
+        Uri.parse('$url/route/v1/driving/$origin;$destination?overview=full');
 
     final response = await http.get(uri);
 
@@ -47,28 +47,24 @@ class _LocationSearchWidgetState extends State<LocationSearchWidget> {
       int distance = (data['routes'][0]['distance']).toInt();
       int duration = (data['routes'][0]['duration']).toInt();
 
-      if (data['routes'][0].containsKey('legs')) {
-        // Your existing code to process the route data
+      if (data.containsKey('features')) {
+        List<dynamic> features = data['features'];
 
-        List<dynamic> steps = data['routes'][0]['legs'][0]['steps'];
+        if (features.isNotEmpty) {
+          List<dynamic> steps =
+              features[0]['properties']['segments'][0]['steps'];
 
-        for (var step in steps) {
-          // Print the turning points
-          // print('Turn at: ${step['maneuver']['location']}');
+          for (var step in steps) {
+            String instruction = step['instruction'];
+            double distance = step['distance'];
 
-          // Print the distance
-          print('Distance: ${step['distance']} meters');
-
-          // Print the direction to turn
-          print('Turn to: ${step['maneuver']['modifier']}');
-
-          // Print the time
-          print('Time: ${step['duration']} seconds');
+            print('Instruction: $instruction');
+            print('Distance: $distance meters');
+          }
         }
       } else {
-        throw Exception('Route data does not contain legs');
+        print("False");
       }
-
       // Print the distance and duration
       print('Distance: $distance meters');
       print('Duration: $duration seconds');
