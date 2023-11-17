@@ -54,7 +54,7 @@ class _LocationSearchWidgetState extends State<LocationSearchWidget> {
 
         for (var step in steps) {
           // Print the turning points
-          print('Turn at: ${step['maneuver']['location']}');
+          // print('Turn at: ${step['maneuver']['location']}');
 
           // Print the distance
           print('Distance: ${step['distance']} meters');
