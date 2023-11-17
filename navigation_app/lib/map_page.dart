@@ -37,8 +37,8 @@ class _LocationSearchWidgetState extends State<LocationSearchWidget> {
         ? '${destinationLocation!.longitude},${destinationLocation!.latitude}'
         : '38.8101,8.9831'; // Destination latitude and longitude
 
-    Uri uri =
-        Uri.parse('$url/route/v1/driving/$origin;$destination?overview=full');
+    Uri uri = Uri.parse(
+        '$url/route/v1/driving/$origin;$destination?overview=full&steps=true');
 
     final response = await http.get(uri);
 
@@ -47,24 +47,31 @@ class _LocationSearchWidgetState extends State<LocationSearchWidget> {
       int distance = (data['routes'][0]['distance']).toInt();
       int duration = (data['routes'][0]['duration']).toInt();
 
-      if (data.containsKey('features')) {
-        List<dynamic> features = data['features'];
+      if (data.isNotEmpty) {
+        // Check the structure of the data and access the 'features' key
+        print(data.keys); // Add this line to check the keys of the data
 
-        if (features.isNotEmpty) {
-          List<dynamic> steps =
-              features[0]['properties']['segments'][0]['steps'];
+        // Rest of your code
+      }
 
-          for (var step in steps) {
-            String instruction = step['instruction'];
-            double distance = step['distance'];
+      if (data['routes'][0].containsKey('legs')) {
+        // Your existing code to process the route data
 
-            print('Instruction: $instruction');
-            print('Distance: $distance meters');
-          }
+        List<dynamic> steps = data['routes'][0]['legs'][0]['steps'];
+
+        for (var step in steps) {
+          // Print the turning points
+          // print('Turn to: ${step['maneuver']['location']}');
+
+          print('Distance: ${step['distance']} meters');
+
+          print('Turn to: ${step['maneuver']['modifier']}');
+          print('Time: ${step['duration']} seconds');
         }
       } else {
-        print("False");
+        throw Exception('Route data does not contain legs');
       }
+
       // Print the distance and duration
       print('Distance: $distance meters');
       print('Duration: $duration seconds');
